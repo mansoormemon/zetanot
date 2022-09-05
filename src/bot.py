@@ -3,6 +3,7 @@ from nextcord import Intents
 from nextcord import Embed
 
 from googletrans import Translator
+import language_tool_python
 
 
 class Meta:
@@ -37,7 +38,7 @@ class Zeta(commands.Bot):
         print(f'[INFO] Client {self.user} is ready!')
 
     def add_commands(self):
-        @self.command(aliases=['translate', 'يترجم'], pass_context=True)
+        @self.command(name='translate', aliases=['يترجم'], pass_context=True)
         @Meta.sentencecriterion
         async def translate(ctx, msg):
             async def show_help_card():
@@ -74,3 +75,33 @@ class Zeta(commands.Bot):
                 await ctx.reply(translation.text)
             else:
                 await ctx.reply(f'Failed to translate: {msg}')
+
+        @self.command(name='grammar', pass_context=True)
+        @Meta.sentencecriterion
+        async def grammar(ctx, msg):
+            async def show_help_card():
+                TITLE = '!grammar'
+                DESCRIPTION = (
+                    '**__How to use?__**\n'
+                    '!grammar *These is my book.*\n'
+                )
+                COLOR = 0xD3ADF7
+
+                embed = Embed(title=TITLE,
+                              description=DESCRIPTION,
+                              color=COLOR)
+                await ctx.reply(embed=embed)
+
+            LANG = 'en-US'
+
+            if not msg:
+                if ctx.message.reference is not None:
+                    msg = ctx.message.reference.resolved.content
+                else:
+                    await show_help_card()
+                    return
+
+            with language_tool_python.LanguageTool(LANG) as lang_tool:
+                possible_matches = lang_tool.check(msg)
+                corrected_text = language_tool_python.utils.correct(msg, possible_matches)
+                await ctx.reply(corrected_text)
